@@ -38,7 +38,7 @@ class CountriesController extends Controller
     }
 
     // GET ALL COUNTRIES
-    public function getCountriesList(){
+    public function getCountriesList(Request $request){
           $countries = Country::all();
           return DataTables::of($countries)
                               ->addIndexColumn()
@@ -48,7 +48,11 @@ class CountriesController extends Controller
                                                 <button class="btn btn-sm btn-danger" data-id="'.$row['id'].'" id="deleteCountryBtn">Delete</button>
                                           </div>';
                               })
-                              ->rawColumns(['actions'])
+                              ->addColumn('checkbox', function($row){
+                                  return '<input type="checkbox" name="country_checkbox" data-id="'.$row['id'].'"><label></label>';
+                              })
+                         
+                              ->rawColumns(['actions','checkbox'])
                               ->make(true);
     }
 
@@ -96,5 +100,13 @@ class CountriesController extends Controller
             return response()->json(['code'=>0, 'msg'=>'Something went wrong']);
         }
     }
+
+
+    public function deleteSelectedCountries(Request $request){
+       $country_ids = $request->countries_ids;
+       Country::whereIn('id', $country_ids)->delete();
+       return response()->json(['code'=>1, 'msg'=>'Countries have been deleted from database']); 
+    }
+
 
 }
