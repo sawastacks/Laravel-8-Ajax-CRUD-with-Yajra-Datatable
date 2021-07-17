@@ -25,3 +25,4 @@ Route::get('/getCountriesList',[CountriesController::class, 'getCountriesList'])
 Route::post('/getCountryDetails',[CountriesController::class, 'getCountryDetails'])->name('get.country.details');
 Route::post('/updateCountryDetails',[CountriesController::class, 'updateCountryDetails'])->name('update.country.details');
 Route::post('/deleteCountry',[CountriesController::class,'deleteCountry'])->name('delete.country');
+Route::post('/deleteSelectedCountries',[CountriesController::class,'deleteSelectedCountries'])->name('delete.selected.countries');
