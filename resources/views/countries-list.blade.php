@@ -16,15 +16,18 @@
     <div class="container">
           <div class="row" style="margin-top: 45px">
               <div class="col-md-8">
+
+                <input type="text" name="searchfor" id="" class="form-control">
                     <div class="card">
                         <div class="card-header">Countries</div>
                         <div class="card-body">
                             <table class="table table-hover table-condensed" id="counties-table">
                                 <thead>
+                                    <th><input type="checkbox" name="main_checkbox"><label></label></th>
                                     <th>#</th>
                                     <th>Country name</th>
                                     <th>Capital City</th>
-                                    <th>Actions</th>
+                                    <th>Actions <button class="btn btn-sm btn-danger d-none" id="deleteAllBtn">Delete All</button></th>
                                 </thead>
                                 <tbody></tbody>
                             </table>
@@ -109,7 +112,7 @@
                 });
 
                 //GET ALL COUNTRIES
-                $('#counties-table').DataTable({
+               var table =  $('#counties-table').DataTable({
                      processing:true,
                      info:true,
                      ajax:"{{ route('get.countries.list') }}",
@@ -117,11 +120,16 @@
                      "aLengthMenu":[[5,10,25,50,-1],[5,10,25,50,"All"]],
                      columns:[
                         //  {data:'id', name:'id'},
+                         {data:'checkbox', name:'checkbox', orderable:false, searchable:false},
                          {data:'DT_RowIndex', name:'DT_RowIndex'},
                          {data:'country_name', name:'country_name'},
                          {data:'capital_city', name:'capital_city'},
-                         {data:'actions', name:'actions'},
+                         {data:'actions', name:'actions', orderable:false, searchable:false},
                      ]
+                }).on('draw', function(){
+                    $('input[name="country_checkbox"]').each(function(){this.checked = false;});
+                    $('input[name="main_checkbox"]').prop('checked', false);
+                    $('button#deleteAllBtn').addClass('d-none');
                 });
 
                 $(document).on('click','#editCountryBtn', function(){
@@ -197,6 +205,78 @@
                     });
 
                 });
+
+
+
+
+           $(document).on('click','input[name="main_checkbox"]', function(){
+                  if(this.checked){
+                    $('input[name="country_checkbox"]').each(function(){
+                        this.checked = true;
+                    });
+                  }else{
+                     $('input[name="country_checkbox"]').each(function(){
+                         this.checked = false;
+                     });
+                  }
+                  toggledeleteAllBtn();
+           });
+
+           $(document).on('change','input[name="country_checkbox"]', function(){
+
+               if( $('input[name="country_checkbox"]').length == $('input[name="country_checkbox"]:checked').length ){
+                   $('input[name="main_checkbox"]').prop('checked', true);
+               }else{
+                   $('input[name="main_checkbox"]').prop('checked', false);
+               }
+               toggledeleteAllBtn();
+           });
+
+
+           function toggledeleteAllBtn(){
+               if( $('input[name="country_checkbox"]:checked').length > 0 ){
+                   $('button#deleteAllBtn').text('Delete ('+$('input[name="country_checkbox"]:checked').length+')').removeClass('d-none');
+               }else{
+                   $('button#deleteAllBtn').addClass('d-none');
+               }
+           }
+
+
+           $(document).on('click','button#deleteAllBtn', function(){
+               var checkedCountries = [];
+               $('input[name="country_checkbox"]:checked').each(function(){
+                   checkedCountries.push($(this).data('id'));
+               });
+
+               var url = '{{ route("delete.selected.countries") }}';
+               if(checkedCountries.length > 0){
+                   swal.fire({
+                       title:'Are you sure?',
+                       html:'You want to delete <b>('+checkedCountries.length+')</b> countries',
+                       showCancelButton:true,
+                       showCloseButton:true,
+                       confirmButtonText:'Yes, Delete',
+                       cancelButtonText:'Cancel',
+                       confirmButtonColor:'#556ee6',
+                       cancelButtonColor:'#d33',
+                       width:300,
+                       allowOutsideClick:false
+                   }).then(function(result){
+                       if(result.value){
+                           $.post(url,{countries_ids:checkedCountries},function(data){
+                              if(data.code == 1){
+                                  $('#counties-table').DataTable().ajax.reload(null, true);
+                                  toastr.success(data.msg);
+                              }
+                           },'json');
+                       }
+                   })
+               }
+           });
+        
+
+
+
          });
 
     </script>
